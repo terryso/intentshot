@@ -1,0 +1,55 @@
+# ===== OS =====
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ===== IDE / Editor =====
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+*.swp
+*.swo
+
+# ===== Environment variables =====
+.env
+.env.*
+!.env.example
+
+# ===== Node.js =====
+node_modules/
+dist/
+build/
+out/
+coverage/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ===== Build / Cache =====
+.cache/
+.tmp/
+tmp/
+
+# ===== Claude Code =====
+.claude/settings.local.json
+
+# ===== Logs =====
+logs/
+*.log.*
+
+# ===== App specifics =====
+# intentshot build artifacts (adjust as the stack takes shape)
