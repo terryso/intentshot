@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>PRD Validation: 意拍 IntentShot PRD v1.0</title>
+<style>
+  :root {
+    --bg: #fafaf9;
+    --surface: #ffffff;
+    --border: #e7e5e4;
+    --text: #1c1917;
+    --muted: #78716c;
+
+    --verdict-strong: #16a34a;
+    --verdict-adequate: #65a30d;
+    --verdict-thin: #d97706;
+    --verdict-broken: #dc2626;
+
+    --sev-low: #64748b;
+    --sev-medium: #ca8a04;
+    --sev-high: #ea580c;
+    --sev-critical: #dc2626;
+
+    --grade-exc: #16a34a;
+    --grade-good: #65a30d;
+    --grade-fair: #d97706;
+    --grade-poor: #dc2626;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    font-size: 15px;
+  }
+  .container { max-width: 960px; margin: 0 auto; padding: 32px 24px 64px; }
+
+  header.report-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 24px;
+  }
+  .title h1 { margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -0.01em; }
+  .title .subtitle { color: var(--muted); font-size: 13px; margin-top: 4px; font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+  .grade {
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-weight: 600;
+    color: white;
+    font-size: 15px;
+    white-space: nowrap;
+  }
+  .grade-excellent { background: var(--grade-exc); }
+  .grade-good { background: var(--grade-good); }
+  .grade-fair { background: var(--grade-fair); }
+  .grade-poor { background: var(--grade-poor); }
+
+  .synthesis {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--muted);
+    border-radius: 8px;
+    padding: 18px 22px;
+    margin-bottom: 24px;
+    font-size: 15.5px;
+  }
+  .synthesis p { margin: 0 0 10px; }
+  .synthesis p:last-child { margin-bottom: 0; }
+
+  .dimension-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+  .dim-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+  }
+  .dim-card .dim-name { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+  .dim-card .dim-verdict { font-size: 14px; font-weight: 600; }
+
+  section.dimension, section.reviewer-section { margin-bottom: 14px; }
+  section.dimension details, section.reviewer-section details {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  section summary {
+    padding: 14px 20px;
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  section summary::-webkit-details-marker { display: none; }
+  section summary::before {
+    content: "▸";
+    display: inline-block;
+    color: var(--muted);
+    transition: transform 0.15s ease;
+  }
+  section details[open] summary::before { transform: rotate(90deg); }
+  section summary h2 {
+    display: inline;
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    flex: 1;
+  }
+  .verdict-pill {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: white;
+  }
+  .verdict-strong { background: var(--verdict-strong); }
+  .verdict-adequate { background: var(--verdict-adequate); }
+  .verdict-thin { background: var(--verdict-thin); }
+  .verdict-broken { background: var(--verdict-broken); }
+
+  .dim-body { padding: 4px 20px 18px; }
+  .dim-judgment { color: var(--text); font-size: 14.5px; }
+  .dim-judgment p { margin: 0 0 10px; }
+
+  .findings-list { padding: 0 20px 4px; }
+  article.finding {
+    padding: 14px 0;
+    border-top: 1px solid var(--border);
+  }
+  article.finding:first-child { border-top: none; }
+  article.finding header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+  }
+  .badge {
+    font-size: 10.5px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    line-height: 1.4;
+  }
+  .badge-sev-low { background: rgba(100, 116, 139, 0.12); color: var(--sev-low); }
+  .badge-sev-medium { background: rgba(202, 138, 4, 0.14); color: var(--sev-medium); }
+  .badge-sev-high { background: rgba(234, 88, 12, 0.14); color: var(--sev-high); }
+  .badge-sev-critical { background: rgba(220, 38, 38, 0.14); color: var(--sev-critical); }
+  .finding-title { margin: 0; font-size: 15px; font-weight: 500; flex: 1; min-width: 200px; }
+  .finding-location { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12.5px; color: var(--muted); }
+  .finding-note, .finding-fix { margin-top: 6px; font-size: 14px; }
+  .finding-fix strong { color: var(--muted); font-weight: 500; }
+
+  .reviewer-source {
+    font-size: 12px;
+    color: var(--muted);
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+
+  .mechanical {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-top: 24px;
+    font-size: 14px;
+  }
+  .mechanical h3 { margin: 0 0 10px; font-size: 14px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  .mechanical ul { margin: 0; padding-left: 20px; }
+  .mechanical li { margin-bottom: 4px; color: var(--text); }
+
+  footer.report-footer {
+    margin-top: 40px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--muted);
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  footer .meta { display: flex; gap: 24px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+  <div class="container">
+
+    <header class="report-header">
+      <div class="title">
+        <h1>意拍 IntentShot PRD v1.0 — Validation Report</h1>
+        <div class="subtitle">/Users/nick/CascadeProjects/intentshot/docs/PRD.md</div>
+      </div>
+      <div class="grade grade-poor">Poor</div>
+    </header>
+
+    <div class="synthesis">
+      <p>这份 PRD 最站得住的是它的诚实边界：§1.4 产品边界主动声明"不承诺完全控制 iOS 原生相机的所有能力"，§7 明确"当前不预设未经真机和用户测试支持的数值门槛"，§8 用 Spike→原型→可用性测试的阶梯而非直接承诺，这些让它作为方向决策文档可信。风险在于两点：一是下游可用性明显弱于链顶文档所需——无 Glossary、关键范围决策所依赖的 "JEV" 全文从未定义、用户旅程只有一条无主角的线性主流程；二是若干场景级取舍（美食/旅行/夜景是否在 MVP 内）与 FR-12 与验收标准之间的口径差被静默处理。进 UX/架构拆解前需要补名词表、JEV 定义与 FR↔验收追溯，否则下游只能靠猜。</p>
+      <p>对抗性审查把图景进一步压暗，并升级出三项 critical：<strong>价值主张与公开 API 边界正面冲突</strong>——"背景虚化、暖调、景深"这些最有说服力的承诺效果恰好全部落在 §1.4 自己声明"不作保证"的计算摄影区域内，MVP 核心场景可能空转；<strong>目标设备与最低系统版本从未定义</strong>——无本地模型的设备上产品形态二义（极小存量 vs 降级链路成默认体验）；<strong>全文档零数值门槛</strong>——所有可判定性推迟到一个没有 go/no-go 判据与失败预案的 Spike 之后。两位审查者独立命中同一批问题（JEV 未定义、FR-11 评估语义、场景取舍静默处理），交叉验证了发现的可信度。按评级规则（存在 critical 发现即 Poor），综合评级为 <strong>Poor</strong>：作为愿景陈述干净克制，但作为驱动 UX / 架构 / epics 的决策文档，需先修复 critical 项再前进。</p>
+    </div>
+
+    <div class="dimension-summary">
+      <div class="dim-card">
+        <div class="dim-name">决策就绪度 Decision-readiness</div>
+        <div class="dim-verdict" style="color: var(--verdict-adequate)">充分</div>
+      </div>
+      <div class="dim-card">
+        <div class="dim-name">实质重于形式 Substance</div>
+        <div class="dim-verdict" style="color: var(--verdict-strong)">良好</div>
+      </div>
+      <div class="dim-card">
+        <div class="dim-name">战略一致性 Coherence</div>
+        <div class="dim-verdict" style="color: var(--verdict-strong)">良好</div>
+      </div>
+      <div class="dim-card">
+        <div class="dim-name">完成度清晰度 Done-ness</div>
+        <div class="dim-verdict" style="color: var(--verdict-adequate)">充分</div>
+      </div>
+      <div class="dim-card">
+        <div class="dim-name">范围诚实度 Scope honesty</div>
+        <div class="dim-verdict" style="color: var(--verdict-adequate)">充分</div>
+      </div>
+      <div class="dim-card">
+        <div class="dim-name">下游可用性 Downstream</div>
+        <div class="dim-verdict" style="color: var(--verdict-thin)">薄弱</div>
+      </div>
+      <div class="dim-card">
+        <div class="dim-name">形态契合度 Shape fit</div>
+        <div class="dim-verdict" style="color: var(--verdict-adequate)">充分</div>
+      </div>
+    </div>
+
+    <section class="dimension">
+      <details>
+        <summary>
+          <h2>决策就绪度 Decision-readiness</h2>
+          <span class="verdict-pill verdict-adequate">充分</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p>决策以决策的形态出现，不是"考虑事项"。§1.4 用四条边界定义了不做什么；§6.2 暂缓清单里"JEV 成为必需依赖的正式功能"是一条真实的取舍；§7 目标设定原则把数值门槛的推迟本身作为一个明示决策（"先建立基线，再确定可验证的目标值"），并解释了理由。§9 风险表收录了"用户价值不足以支撑付费"这类不利假设，应对是"原型阶段验证频率、留存与付费意愿"——即商业模式问题被推到原型之后，这是明确的排序决策而非回避。</p>
+            <p>但有张力被抹平了。§2.2 把"美食/静物""旅行与风景""夜景"都列为核心场景，而 §6.1 MVP 纳入只写"人像场景优先"，§6.2 暂缓只写"复杂夜景自动摄影"——美食、旅行、简单夜景三者到底在不在 MVP 内没有答案，而 FR-15 又把"暖调美食"列为预设方案，暗示美食部分在。一个读到 §2.2 的决策者会以为产品首期覆盖五个场景，读到 §6.1 才发现是一个半。此外全文没有 Open Questions 区、没有任何 <code>[NOTE FOR PM]</code> 式标记——真实存在的不确定项（本地模型能力"未确认"、付费意愿）全部以"风险已应对"的口吻写进 §9，读者无法分辨哪些未确认项会 gate 绿灯、哪些只是执行细节。</p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">关键场景的 MVP 取舍未言明</h3>
+              <span class="finding-location">§2.2 vs §6.1/6.2</span>
+            </header>
+            <div class="finding-note">"美食/静物""旅行与风景""夜景"列为核心场景，MVP 纳入仅"人像场景优先"，暂缓仅覆盖"复杂夜景自动摄影"；FR-15 的"暖调美食"预设又部分矛盾。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 在 §6 明确逐场景纳入/部分纳入/暂缓，并把 FR-15 与场景决策对齐。</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">未确认前提以已应对口吻呈现</h3>
+              <span class="finding-location">§9, §8</span>
+            </header>
+            <div class="finding-note">"本地模型在目标设备上的能力/可用性未确认"是本 PRD 最大的技术赌注，但它只出现在风险表；没有 Open Questions 区标注该项是否阻塞 MVP 启动、Spike 失败时回退到哪个范围。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 增加 Open Questions 区，为 Spike 失败情形写明降级范围决策。</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">FR-12 与验收标准口径不一致</h3>
+              <span class="finding-location">FR-12 vs §10</span>
+            </header>
+            <div class="finding-note">FR-12 说"尽量保留其他已确认目标"，§10 验收写"系统保留未修改的目标"，验收比需求更硬，"尽量"未被解释。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 统一为可判定口径（例如"除用户指定修改项外其余目标字段值不变"）。</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <section class="dimension">
+      <details>
+        <summary>
+          <h2>实质重于形式 Substance over theater</h2>
+          <span class="verdict-pill verdict-strong">良好</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p>几乎没有家具。三个画像（§2.1）数量克制且各自驱动了真实需求：内容创作者的"保存和复用方案"落在 FR-14/FR-15，轻度爱好者的"不想每次从头调参"落在方案复用与 FR-32。NFR 不是模板货：NFR-01"相机核心链路不得依赖云端模型"、NFR-07"避免把模型置信度包装成成片成功保证"、NFR-08"白名单、范围、能力和状态校验"都是只属于这款产品、且可检验的表述。愿景（§1.2）虽然品类通用，但 §1.3 的价值主张"说出你想拍的，剩下的交给意拍"与闭环表述有 FR 全链路支撑，不属创新剧场。FR-24/26/27/28 属 iOS 应用标配，但各自带产品化内容，不算凑数。</p>
+            <p>仅两处偏弱：FR-32 与 FR-07 的区别边界含糊；§2.2 把"视频"列为场景又立即声明"首期不作为核心承诺"，这一条对读者没有信息量。</p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">FR-32 与 FR-07 边界含糊</h3>
+              <span class="finding-location">FR-32, FR-07</span>
+            </header>
+            <div class="finding-note">FR-07 是"查看方案摘要后应用"，FR-32 是"对于用户已确认的简单方案，支持快速应用"，"已确认""简单方案"均未定义，两 FR 可能拆出重复故事。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 明确一键模式跳过的是哪一步、进入条件是什么。</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">"视频"占位场景</h3>
+              <span class="finding-location">§2.2</span>
+            </header>
+            <div class="finding-note">列为核心场景同句即声明"后续版本探索，首期不作为核心承诺"，属装点性列举。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 移入 §6.2 暂缓，§2.2 只留首期场景。</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <section class="dimension">
+      <details>
+        <summary>
+          <h2>战略一致性 Strategic coherence</h2>
+          <span class="verdict-pill verdict-strong">良好</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p>PRD 有明确论点：自然语言意图到相机执行的闭环能替代参数知识（§1.3、§2.3 JTBD）。功能排序服从论点：FR-01 至 FR-13 全部服务闭环本体，FR-14 至 FR-17 服务复用与留存，FR-18 至 FR-28 是平台卫生，且 §6.1 用"人像场景优先"给出收缩逻辑。成功指标验证论点而非活跃度：都是闭环有效性的直接度量，不是 DAU/MAU 式活动量。MVP 类型是问题解决型，范围逻辑一致。</p>
+            <p>两处缺口：其一，论点的可证伪行为没有被度量——产品赌的是"用户愿意把相机配置交给 AI"，但 FR-09 允许关闭辅助、FR-16 允许手动覆盖，指标体系（§7）却没有"辅助关闭率""手动覆盖后回流 AI 的比率"这类反指标；若大量用户拿了方案就关掉 AI，论点已败但现有指标看不出来。其二，所有数值目标后置（§7 目标设定原则），诚实但没有把测定时点绑定到 §8 计划节点，导致指标区在绿灯时不可判伪。</p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">缺少反指标</h3>
+              <span class="finding-location">§7 vs FR-09/FR-16</span>
+            </header>
+            <div class="finding-note">辅助关闭、手动覆盖后不再回流是论点被证伪的直接信号，指标体系未覆盖。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 增加如"AI 方案应用后 7 日内仍启用辅助的会话占比"。</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">数值目标后置未绑定决策时点</h3>
+              <span class="finding-location">§7</span>
+            </header>
+            <div class="finding-note">"先建立基线，再确定可验证的目标值"未写明由 §8 哪一步产出、何时回填。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 标注目标值回填的触发节点（如小规模可用性测试后）。</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <section class="dimension">
+      <details>
+        <summary>
+          <h2>完成度清晰度 Done-ness clarity</h2>
+          <span class="verdict-pill verdict-adequate">充分</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p>多数 FR 带有可检验后果：FR-02 "输出必须通过 Schema 校验"、FR-07 要求区分三种显示态、FR-05 "不得将某一机型的能力写死为所有设备通用"、FR-08 的校验清单、FR-22 逐项列举错误场景。§10 验收标准八条覆盖闭环主干，给出 MVP 级"done"的粗粒度定义，这是本维度最重要的加分项。</p>
+            <p>弱集中在核心差异化环节。FR-11 是闭环的落点，但意图属性如何映射到可测图像指标、"目标达成"以什么形态呈现给用户都没有答案，而 §10 验收里也没有对应条目。FR-29 整条由限定词构成，无触发条件、无数量边界。NFR-02 "可接受的交互响应"是有意后置但连测定时点都未挂接。另外 FR-30 与 FR-11/FR-12 的分工在文本上难以划清，拆故事时易重复。</p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-high">high</span>
+              <h3 class="finding-title">FR-11 "目标达成"评估语义未定义</h3>
+              <span class="finding-location">FR-11, §3.1 步骤8</span>
+            </header>
+            <div class="finding-note">意图属性到可测量图像指标的映射规则、达成度的计算与呈现形态均缺失；这是产品闭环的核心环节，下游架构与故事创作无法从这里起步。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 为每类意图属性定义度量方式与判定阈值来源，并写明反馈 UI 呈现的最小信息集。</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">FR-29 全限定词无边界</h3>
+              <span class="finding-location">FR-29</span>
+            </header>
+            <div class="finding-note">"按需""有限""可解释"三个词都没有可判定条件。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 定义评估触发时机（如方案应用后、构图显著变化时）与建议条数上限。</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">NFR-02 阈值后置且无测定时点</h3>
+              <span class="finding-location">NFR-02</span>
+            </header>
+            <div class="finding-note">"具体 P50/P95 目标在真机基准测试后确定"，但未绑定 §8 的 Spike 节点，也没有解析/生成各环节的分解口径。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 挂接到 §8 步骤 1，并列出需分别测定的环节。</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">FR-13 无防抖量化口径</h3>
+              <span class="finding-location">FR-13</span>
+            </header>
+            <div class="finding-note">机制列举到位，但"避免自动参数反复来回变化"缺可检验上限（如单位时间自动调整次数）。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 补一个暂定上限并标注待真机校准。</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">FR-24 "足够对比度"无标准</h3>
+              <span class="finding-location">FR-24</span>
+            </header>
+            <div class="finding-note">可引用 WCAG 数值。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 标注对比度比值下限。</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">FR-30 与 FR-11/FR-12 分工模糊</h3>
+              <span class="finding-location">FR-30</span>
+            </header>
+            <div class="finding-note">"拍摄后将图像分析结果与用户意图对照"与 FR-11 的分析、FR-12 的调整存在重叠。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 写明 FR-30 独有的状态转换（进入"评估后迭代"会话态）。</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <section class="dimension">
+      <details>
+        <summary>
+          <h2>范围诚实度 Scope honesty</h2>
+          <span class="verdict-pill verdict-adequate">充分</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p>去范围化总体是显式的、做了实事：§1.4 四条边界、§6.2 六条暂缓、§6.3 把 JEV 圈定为"仅作为可选对照实验"。§8 的阶梯式验证计划本身就是诚实的 de-scoping——商业模式留到第 5 步。</p>
+            <p>缺口在标记体系与静默去范围。全文没有一个 <code>[ASSUMPTION]</code> 或 <code>[NOTE FOR PM]</code> 标记，也没有索引；"iOS（首发）"隐含的跨平台前提、默认中文输入隐含语言范围、云端决策服务是否存在于 MVP 都是未标注的推断。更实质的是场景静默去范围：§2.2 与 §6 之间的美食/旅行/夜景取舍没有出现在任何暂缓清单里。当前是"真实不确定性高、标记密度为零"，读者靠 §9 才能拼出不确定性全貌。</p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">场景级去范围未显式化</h3>
+              <span class="finding-location">§2.2 vs §6.2</span>
+            </header>
+            <div class="finding-note">美食（仅存于 FR-15 预设）、旅行/风景（完全无 FR 覆盖）的 MVP 状态需读者自行推断。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 并入 §6.2 或新增"部分纳入"小节。</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">零假设标记、零开放项标记</h3>
+              <span class="finding-location">全文</span>
+            </header>
+            <div class="finding-note">隐含前提（跨平台、语言范围、云端服务是否在 MVP）未以 <code>[ASSUMPTION]</code> 形式显式化并索引。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 补假设标记与索引，至少覆盖上述三项。</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">JEV 实验无退出准则</h3>
+              <span class="finding-location">§6.3</span>
+            </header>
+            <div class="finding-note">"比较加入 JEV 前后的实际收益"未定义收益口径与采纳/放弃的判定条件。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 写明实验的成功阈值与两条出路。</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <section class="dimension">
+      <details open>
+        <summary>
+          <h2>下游可用性 Downstream usability</h2>
+          <span class="verdict-pill verdict-thin">薄弱</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p>这是与链顶身份差距最大的一维。无 Glossary；FR/NFR 编号连续唯一（这点干净），但全文没有任何按 ID 的交叉引用——§6.1 MVP 纳入清单、§10 验收标准八条全部用散文复述需求，无法反向定位到 FR。核心名词在字段义与通用义之间漂移：FR-02 把"目标"定义为意图对象的子字段，而 FR-11/FR-12/§10 中"目标"又指用户整体意图。</p>
+            <p>最重的问题是 JEV。它在五处出现，承载了一条暂缓决策、一项实验、一组成本指标，但全文从未展开这个词，也没有 Glossary 兜底——下游（含已存在的 ARCHITECTURE.md）只能各自猜。用户旅程侧：§3.1 是一条无具名主角的线性十步主流程。冲突需求（FR-03）、降级（FR-19）、手动覆盖（FR-16）、中断恢复（FR-21）这些高价值旅程全部只以 FR 散文存在。UI-UX.md 已经在自行补这些设计判断，说明下游在替代而非引用 PRD。</p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-critical">critical</span>
+              <h3 class="finding-title">"JEV" 全文未定义</h3>
+              <span class="finding-location">§6.2, §6.3, §7, §8, §9</span>
+            </header>
+            <div class="finding-note">一个承载暂缓决策、实验设计与成本指标的术语从未展开，无 Glossary；下游架构文档已在自行定义（"JEV 为可选决策增强服务"），两文档定义来源断裂。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 首次出现处展开全称并建立 Glossary 词条，注明其与本地模型/规则引擎的关系。</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-high">high</span>
+              <h3 class="finding-title">无 Glossary 且核心名词语义漂移</h3>
+              <span class="finding-location">FR-02 vs FR-11/FR-12/§10</span>
+            </header>
+            <div class="finding-note">"目标"在意图对象字段义与用户意图整体义之间摇摆；"意图/拍摄意图/结构化意图/摄影意图对象"变体并存。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 建 Glossary，固定"意图（Intent）"为对象、"目标（Objective）"为字段，全文替换统一。</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">无具名主角的情景旅程</h3>
+              <span class="finding-location">§3.1</span>
+            </header>
+            <div class="finding-note">消费级链顶产品仅有单一线性主流程，冲突、降级、覆盖、中断四类旅程无 UJ 承载。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 补 2–3 条具名主角旅程（如冲突需求、模型降级），主角从 §2.1 三个画像取。</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">§6.1 与 §10 无 FR 引用</h3>
+              <span class="finding-location">§6.1, §10</span>
+            </header>
+            <div class="finding-note">验收八条与 MVP 纳入清单均为散文，无法追溯覆盖了哪些 FR、遗漏了哪些（如 FR-24 无障碍未出现在任何验收条目）。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 为每条验收与纳入项标注 FR ID。</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">版本信息不全</h3>
+              <span class="finding-location">文档头</span>
+            </header>
+            <div class="finding-note">有"版本 v1.0 / 状态"无日期与作者，多文档并行时无法对齐版本。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 补日期与作者字段。</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <section class="dimension">
+      <details>
+        <summary>
+          <h2>形态契合度 Shape fit</h2>
+          <span class="verdict-pill verdict-adequate">充分</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p>形状与产品基本匹配：消费级 iOS 产品、有 §3 体验章节、验收区、发布计划，未过度形式化。§3.2 关键体验原则是全文质量最高的段落之一——"用户始终可以拍摄，不被 AI 流程锁死""用户明确锁定的参数和目标，不应被系统随意覆盖"是能直接约束 UX 与架构的产品判断。两处形状问题：一是旅程形式化低于消费级链顶所需（已在 Downstream usability 记录，不重复计数）；二是 JEV 研究议程与产品 PRD 混装——§6.3、§7 实验组指标、§8 第 4 步、§9 风险四处构成一条研究支线，把实验词汇带进了产品决策文档并贡献了本文最严重的未定义术语。</p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">研究议程与产品 PRD 混装</h3>
+              <span class="finding-location">§6.3, §7, §8, §9</span>
+            </header>
+            <div class="finding-note">JEV 对照实验属探索性研究而非 MVP 需求，占四节篇幅并引入未定义术语。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 收敛为一处（§6.3），其余位置仅引用。</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <section class="reviewer-section">
+      <details>
+        <summary>
+          <h2>Adversarial review（对抗性评审）</h2>
+          <span class="reviewer-source">_bmad-output/planning-artifacts/prds/prd-intentshot-2026-09-27/review-adversarial-general.md</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p>这份 PRD 作为愿景陈述是干净、克制、诚实的，但正因如此，它作为<strong>决策文档是不合格的</strong>：它把最响亮的承诺（"说出你想拍的，剩下的交给意拍"）建立在自己明确声明不可控的能力之上；把全部可判定性推迟到一个既没有定义、也没有退出判据的"真机 Spike"之后；把 32 条 FR 与 11 条 MVP 纳入项之间的映射责任甩给读者；甚至把一条自家 UX 文档承认可能物理不可实现的指令（"背景再暗一点"）写成了主流程的旗舰示例。第 7 节所有指标没有任何测量定义、分母、数据来源或目标值，第 10 节验收标准全部是流程性检查而非结果性检查——照现在的验收，背景完全没有虚化的成片也能让 MVP"通过验收"。下游 epics 阶段在第一批 story 就会撞上这些问题。建议在进入架构/epics 之前完成一轮修订，重点是 C 级三项。</p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-critical">critical</span>
+              <h3 class="finding-title">C-01 价值主张与公开 API 能力边界正面冲突：最核心的承诺效果恰好是公开 API 最不可控的部分</h3>
+              <span class="finding-location">1.1 / 1.3 / 1.4 / 2.2，对照 NFR-08、FR-08、FR-31</span>
+            </header>
+            <div class="finding-note">1.1 承诺"自动生成并应用拍摄方案，帮助用户更容易拍出接近预期的照片"，2.2 把"背景虚化"列为人像场景第一诉求。但 AVFoundation 公开 API 中镜头光圈是只读的固定硬件值，人像背景虚化依赖系统人像模式的计算摄影链路，第三方无法在拍摄时控制虚化强度；夜景模式同样不对三方开放；"电影感/暖调"只剩白平衡增益的有限调节。产品价值主张里最有说服力的那几个效果，全部落在自己声明的"不作保证"区域里。这不是免责声明能盖住的问题——这是 MVP 的核心场景可能空转的问题。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 增加"承诺效果 × 公开 API 手段 × 可控程度"对照表，逐项标注可实现路径与降级形态；据此裁剪 2.2 场景列表与第 10 节验收；把"哪些效果做不到"从免责条款升级为明确的产品决策。</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-critical">critical</span>
+              <h3 class="finding-title">C-02 目标设备与最低系统版本从未定义：产品在"无本地模型设备"上的形态是二义的</h3>
+              <span class="finding-location">全文；8.1 技术 Spike；6.1；FR-05/FR-19/FR-20</span>
+            </header>
+            <div class="finding-note">PRD 通篇只说"本地模型"，从未出现 Foundation Models、最低 iOS 版本或目标机型集合。若最低版本锁定为支持 Apple Intelligence 的机型，可服务设备存量极小；若不设限，FR-19 的降级链路就是默认体验——产品实际形态是一个带摄影文案的模板相机应用，"AI 智能相机"的定位对这部分用户是虚假宣传。PRD 的核心技术赌注从未在 PRD 层面命名。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 明确（哪怕以"Spike 待定参数"形式）最低 iOS 版本与目标机型集合；写明不满足条件的设备是"不支持安装"还是"降级可用"；在 1.1 或 8.1 点名核心技术依赖及其设备门控条件。</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-critical">critical</span>
+              <h3 class="finding-title">C-03 全文档零数值门槛，且所有可判定性被推迟到一个没有退出判据的 Spike 之后</h3>
+              <span class="finding-location">5 NFR-02/NFR-05；7 目标设定原则；8 发布与验证计划；9 风险表</span>
+            </header>
+            <div class="finding-note">NFR-02"可接受的交互响应"是自我引用，不是标准。这份 PRD 里没有任何一个可判定通过/失败的量化标准。更糟的是，承担解锁全部数值的 Spike 本身没有通过/失败判据、没有时限、没有"失败后怎么办"——如果 Spike 的结论是"本地模型解析质量不够"，PRD 没有计划 B。下游 epics 的性能故事和验收标准将全部写成"待真机后确定"，在 sprint 层面等于没有验收。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 为 Spike 定义明确的 go/no-go 判据与时限（临时门槛，标注可修订）；给 NFR-02/NFR-05 设临时量级；增加"Spike 失败决策树"（缩 MVP / 引入云端解析 / 暂停立项）；给第 8 节每个阶段补退出条件。</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-high">high</span>
+              <h3 class="finding-title">H-04 主流程旗舰示例是产品自己承认可能做不到的指令，且把"参数调整"与"构图引导"混为一谈</h3>
+              <span class="finding-location">3.1 步骤 9；FR-12；FR-02；对照 UI-UX 3.8</span>
+            </header>
+            <div class="finding-note">"背景再暗一点"恰好是 UI-UX 3.8 自己承认的物理难题——公开 API 下主体亮度与背景亮度本来就不是两个可独立控制的旋钮；"人物往中间一些"根本不是相机参数——机器动不了人，只能给出构图引导或裁切建议。而 FR-02 的意图 Schema 里甚至没有构图字段。参数类调整、模式类调整、构图引导类调整三类完全不同的输出物在 PRD 里被揉成一个"局部调整方案"，epic 拆分时会当场爆炸。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 建立调整对象类型学（参数类 / 模式类 / 构图引导类），FR-12 明确每类的输出物与验收差异；主流程示例换成当前 API 边界内可兑现的指令。</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-high">high</span>
+              <h3 class="finding-title">H-05 验收标准只验流程不验结果，且与 MVP 纳入清单、FR 体系不对齐</h3>
+              <span class="finding-location">10 验收标准；对照 6.1、FR-14/15/16/17/23/24/27/28/32</span>
+            </header>
+            <div class="finding-note">验收写"人像基础场景可以生成、预览并应用拍摄方案"——"应用"成功只说明参数写进去了，不说明照片达到了用户描述的效果。按这 8 条验收，一张背景毫无虚化、脸照样死黑的照片，只要"部分应用"提示弹了出来，MVP 就算通过。FR-16/17/23/24/27/28/32 全部不在验收清单内——它们是 MVP 的一部分还是不是？验收环节拒绝回答。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 验收改为结果导向（在 N 台测试机上，人像场景成片的人脸亮度、主体清晰度达到预先定义的可判定分级）；逐条核对 6.1 纳入项，要么补验收，要么显式声明不在 MVP 验收范围。</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-high">high</span>
+              <h3 class="finding-title">H-06 核心指标几乎全部没有测量定义，部分指标没有任何 FR 支撑，"匿名"与"留存"互相矛盾</h3>
+              <span class="finding-location">7 核心指标；FR-25/FR-26；9 风险表</span>
+            </header>
+            <div class="finding-note">"比原生相机更省事比例"没有任何 FR 定义过这道对比问题，永远测不出来；"意图解析准确率"没有金标准语料；"拍摄任务完成率"的"任务"从未被定义；FR-25 承诺"匿名统计"但"7/30 日留存"必须依赖跨会话持久标识符——两边都想要，口径不可兼得。反向看，FR-09/13/17/21/23/24/27/28/32 没有任何指标会去验证它们——它们死了也没人知道。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 为每个保留指标写测量定义、数据来源、决策用途；补一个 FR 承载"比原生相机更省事"的问法或砍掉该指标；为意图解析建标注集立项；明确标识方案（授权后的伪匿名 ID）。</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-high">high</span>
+              <h3 class="finding-title">H-07 实时取景调整到底是"自动应用"还是"仅建议"：FR-29、FR-13 与体验原则三方打架</h3>
+              <span class="finding-location">FR-29 / FR-13 / FR-16；3.2 关键体验原则；对照 UI-UX 3.6</span>
+            </header>
+            <div class="finding-note">FR-29 说系统"生成有限、可解释的调整建议"——听起来不自动应用。但 FR-13 的存在前提是"避免自动参数反复来回变化"——说明参数会被自动应用。3.2 体验原则再次确认存在自动应用。最核心的拍摄中交互模式——场景变化时系统是直接拧参数，还是弹一个建议让用户点——在 PRD 里没有答案。这直接决定取景器的整个交互设计、FR-13 防抖的作用对象、FR-23 撤销的语义。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 明确默认模式（仅建议 / 自动应用+一键撤销 / 混合并可切换），写清自动应用的作用参数范围与 FR-16 锁定的优先级关系，并给 FR-29 补验收。</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-high">high</span>
+              <h3 class="finding-title">H-08 品牌口号承诺语音，MVP 只有打字：承诺与首版体验直接背离</h3>
+              <span class="finding-location">1.3 核心价值主张；FR-01；3.1 主流程</span>
+            </header>
+            <div class="finding-note">1.3 的口号是"说出你想拍的"，但 FR-01 白纸黑字："用户可通过文本输入描述拍摄目标；后续可评估语音输入。"MVP 里用户不是"说"，是打字——在单手举着手机、户外阳光下、竖屏取景的状态下，用中文键盘输入一个长句。这是全流程最大的摩擦点，而品牌每天在向用户承诺相反的东西。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 三选一并写进 PRD：(a) 把最小语音输入纳入 MVP；(b) 口号降级为"写下你想拍的"；(c) FR-01 明确 MVP 仅文本，并要求引导文案与商店截图不得暗示语音能力。</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-high">high</span>
+              <h3 class="finding-title">H-09 JEV 全文从未定义，却进入了暂缓清单、指标体系与验证计划</h3>
+              <span class="finding-location">6.2 / 6.3 / 7 技术指标 / 8.4 / 9 风险表</span>
+            </header>
+            <div class="finding-note">整份 PRD 从未展开 JEV 是什么——是某个厂商产品？某类模型？内部代号？一份决策文档围绕一个未定义的三字缩写做出了暂缓决定、埋了指标、排了实验。6.2 那句"暂缓 JEV 成为必需依赖的正式功能"等于给一个不存在的东西办暂缓手续，明显是早期草案的残迹。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 首次出现处给出 JEV 的定义、候选实现类别与选型状态；重写 6.2 该条为正向表述；或把 6.3/8.4 整体移入附录实验计划。</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-high">high</span>
+              <h3 class="finding-title">H-10 UI-UX 设计了"作品"一级导航，PRD 没有任何 FR 支撑它；视频口径两份文档不一致</h3>
+              <span class="finding-location">跨文档：PRD 第 4 节 / 6.1；UI-UX 2、3.10、3.9</span>
+            </header>
+            <div class="finding-note">UI-UX 第 2 节的第三个主导航入口"作品：照片/视频作品浏览与方案关联"，在 PRD 32 条 FR 里没有任何一条覆盖。PRD 2.2 明确视频"首期不作为核心承诺"，UI-UX 的作品页却写"照片/视频作品浏览"。UX 文档已经画出了一个比 PRD 范围更大的产品——epic 规划照 UI-UX 拆会无中生有一整页功能，照 PRD 拆会砍掉一个已设计好的一级导航。</div>
+            <div class="finding-fix"><strong>Fix:</strong> PRD 要么补"作品页（最小版）"的 FR 并纳入 6.1，要么在 UI-UX 显式标注作品页/视频入口为非 MVP；统一视频与夜景在两份文档中的口径。</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">M-11 MVP 边界自相矛盾："人像场景优先" vs 预设示例"暖调美食" vs 2.2 四大场景</h3>
+              <span class="finding-location">6.1；FR-15；2.2</span>
+            </header>
+            <div class="finding-note">FR-15 的预设示例塞进了非人像场景"暖调美食"，而美食不在 6.1 的感知覆盖内；一个没有场景感知兜底的"暖调美食"预设就是硬编码白平衡偏移。2.2 与 6.1 之间的三种读法对应三倍的工作量差距。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 给出 MVP 预设白名单（建议 3 个人像变体），把"暖调美食"等移入 6.2 暂缓；在 2.2 显式标注各场景的版本归属。</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">M-12 FR-03 澄清与折中之间没有决策规则，"或"字给了实现方永久逃逸口</h3>
+              <span class="finding-location">FR-03；对照 UI-UX 4 状态表</span>
+            </header>
+            <div class="finding-note">"系统应提出澄清问题或生成折中策略"——一个"或"字意味着实现可以永远只做折中、永不澄清，也永远算合规。什么时候问、什么时候自己拍板折中，是这个产品体验里最体现"智能"含量的决策点，PRD 完全放空。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 定义澄清触发规则（例：目标间存在硬冲突、且用户优先级缺失/矛盾时澄清，否则折中并解释），并给 FR-03 补可测验收。</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">M-13 只能撤销一次的"历史"是装饰：FR-23 与迭代闭环、3.1 主流程冲突</h3>
+              <span class="finding-location">FR-23；FR-30；FR-16；3.1 步骤 9-10</span>
+            </header>
+            <div class="finding-note">FR-23 标题叫"方案版本与调整历史"，正文却只承诺"支持撤销最近一次 AI 调整"。两轮调整走偏之后，用户无路可退——上一版方案在"历史"里看得见摸不着。记录了版本却不给回退能力，这个"历史"除了埋点还有什么用？</div>
+            <div class="finding-fix"><strong>Fix:</strong> 明确撤销深度（建议至少 N 步栈式撤销，或完整版本树回退），写清 FR-23 版本列表、FR-16"恢复 AI 方案"与撤销栈三者的关系。</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">M-14 FR-11 评估器自身的正确性无校准计划，"景深效果""构图"的可量化性存疑，风险应对循环论证</h3>
+              <span class="finding-location">FR-11；9 风险表"审美难以客观量化"行</span>
+            </header>
+            <div class="finding-note">"景深效果"从单张 RGB 成片根本谈不上量化，"构图"的达成与否没有客观 ground truth。更重要的元问题：FR-11 输出的判断本身准不准，谁说了算？风险表的应对是循环论证——用户反馈用来校准评估器，评估器生成的调整建议又在塑造用户反馈。整个反馈闭环建立在一个未被验证的评估器上。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 把 FR-11 首版指标收窄为算法定义明确的项，每项标注数据来源与已知局限；安排小规模人工标注校准，作为 8.3 可用性测试的一部分。</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">M-15 "不得导致持续抖动"没有测度，防抖参数全部未定，且 Spike 不覆盖稳定性调参</h3>
+              <span class="finding-location">NFR-03；FR-13；8.1 Spike</span>
+            </header>
+            <div class="finding-note">抖动定义是什么？每秒几次算抖？没有测度的 NFR 无法验收。8.1 的 Spike 清单不含稳定性调参，原型阶段也没提——用一个未验证的机制去缓解一个未定义的问题。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 给抖动下可测定义（例：60 秒窗口内同一参数的自动变更 ≤ N 次且不出现方向交替震荡）；把防抖参数调优显式列入 8.2 原型验证范围。</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">M-16 目标市场、合规与上架要求整体缺席</h3>
+              <span class="finding-location">全文；FR-01；FR-25/FR-26；9 风险表</span>
+            </header>
+            <div class="finding-note">FR-01"支持中文常见摄影表达"暗示首发中文市场，但 PRD 对是哪个市场只字未提——这直接决定输入法形态、商店、审核与合规要求（隐私政策、数据删除、AI 相关声明、备案要求等）。风险表出现"用户价值不足以支撑付费"，但全文没有任何商业假设——"付费意愿"要验证的东西连假设都没写下来。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 增加目标市场与合规清单小节，写明首发地区、上架渠道、需要提前启动的合规事项；用一句话写下当前商业假设及其验证方式。</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">L-17 FR-32 "简单方案"无定义</h3>
+              <span class="finding-location">FR-32</span>
+            </header>
+            <div class="finding-note">"简单"由谁判定、按什么判据？参数维度数？目标冲突数？不定义就没法测，epic 只能自由发挥。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 给出判据（例：单一策略、无冲突目标、且已成功应用过至少一次），或改为"用户标记为常用的一键方案"这种用户侧可判定的口径。</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">L-18 无量词泛滥："少量""必要""有限""按需"遍布关键 FR，验收无锚点</h3>
+              <span class="finding-location">FR-04；FR-09；FR-15；FR-29</span>
+            </header>
+            <div class="finding-note">这些词是需求的实际边界——"少量"预设是 3 个还是 30 个，"按需"的触发条件是什么，"有限"建议的上限是几条，全部决定工作量和 UI 密度，全部没有答案。UX 和 epic 阶段只能替 PRD 做这些决定，然后 PRD 失去对成品的约束力。</div>
+            <div class="finding-fix"><strong>Fix:</strong> 每处给数量级或定义触发/上限规则（允许标注"初值待原型确定"，但要有初值）。</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <div class="mechanical">
+      <h3>Mechanical notes（机械性备注）</h3>
+      <ul>
+        <li><strong>Glossary 漂移</strong>：无 Glossary。"意图 / 拍摄意图 / 结构化意图 / 摄影意图对象"变体并存（FR-02）；"目标"双义（意图字段 vs 用户整体意图）是漂移中最实质的一处。</li>
+        <li><strong>ID 连续性</strong>：FR-01–FR-32 连续无重复；NFR-01–NFR-08 连续无重复；全文无按 ID 交叉引用，故无断链，但也无追溯。</li>
+        <li><strong>Assumptions Index</strong>：无内联 <code>[ASSUMPTION]</code> 标记，无索引——属"未使用约定"而非"索引断裂"。</li>
+        <li><strong>UJ 主角命名</strong>：§3.1 主流程无具名主角，全文无其他用户旅程。</li>
+        <li><strong>必备章节</strong>（按消费级链顶标准）：有 产品概述/用户场景/旅程/FR/NFR/MVP 范围/指标/发布计划/风险/验收标准；缺 Glossary、Open Questions、假设索引。</li>
+        <li><strong>JEV 出现次数</strong>：5 处（§6.2、§6.3、§7、§8、§9），0 处定义。</li>
+      </ul>
+    </div>
+
+    <footer class="report-footer">
+      <div class="meta">
+        <span>Rubric: /Users/nick/CascadeProjects/intentshot/.claude/skills/bmad-prd/assets/prd-validation-checklist.md</span>
+        <span>Generated: 2026-09-27T12:52:25+08:00</span>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>
