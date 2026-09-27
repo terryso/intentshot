@@ -53,3 +53,6 @@ logs/
 
 # ===== App specifics =====
 # intentshot build artifacts (adjust as the stack takes shape)
+
+# ===== BMAD personal config =====
+_bmad/config.user.toml
